@@ -6,8 +6,17 @@ dotenv.configDotenv({
     path:'./.env'
 })
 
-connectDB();
+connectDB()
+.then(()=>{
+app.listen(process.env.PORT||6000,()=>{
+    console.log(`server is strated at ${process.env.PORT}`);
+    
+})
+})
+.catch((error)=>{
+console.log("moongoose failed to connect!!",error);
 
+})
 
 
 
