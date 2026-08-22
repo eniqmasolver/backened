@@ -51,40 +51,40 @@ const userschema = new mongoose.Schema({
     }
 
 }, { timestamps: true })
-userschema.pre("save",async function(next){
-      if(!this.isModified("password")) return next();
-    this.password=bcrypt.hash(this.password,10)
+userschema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    this.password = bcrypt.hash(this.password, 10)
     next()
 })
 
 
-userschema.methods.isPasswordCorrect=async function(password){
-    return await bcrypt.compare(password,this.password)
+userschema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password)
 }
 
 
-userschema.methods.generateAccessToken=function(){
-   return JsonWebTokenError.sign(
+userschema.methods.generateAccessToken = function () {
+    return JsonWebTokenError.sign(
         {
-            _id:this._id,
-            email:this.email,
-            username:this.username,
-            fullname:this.fullname
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullname: this.fullname
         },
-        process.env.ACCESS_TOKEN_SECRET,{
-            expiresIn:process.env.ACCESS_TOKEN_EXPIRY
-        }
+        process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+    }
     )
 }
-userschema.methods.generatRefreshToken=function(){
- return JsonWebTokenError.sign(
+userschema.methods.generatRefreshToken = function () {
+    return JsonWebTokenError.sign(
         {
-            _id:this._id,
-      
+            _id: this._id,
+
         },
-        process.env.REFRESH_TOKEN_SECRET,{
-            expiresIn:process.env.REFRESH_TOKEN_EXPIRY
-        }
+        process.env.REFRESH_TOKEN_SECRET, {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+    }
     )
 }
 
