@@ -24,3 +24,4 @@ import fs from "fs"
           fs.unlinkSync(localfilepath)//remove the locally save dtemprary file as uploded  
         }
     }
+    export default uploadCloudinary

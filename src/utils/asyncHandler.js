@@ -14,7 +14,7 @@
 const asynchandler=(requestHandler)=>{
     return (req,res,next)=>{
         Promise.resolve(requestHandler(req,res,next))
-        .reject((err)=>next(err))
+        .catch((err)=>next(err))
     }
 }
 export default asynchandler
