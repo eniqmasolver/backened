@@ -16,7 +16,7 @@ const registerUser=asynchandler(async (req,res)=>{
     //return respond
 
     const {fullname,email,username,password} = req.body
-    console.log("fullname:",fullname);
+    console.log(req.body);
 
      if(fullname==="" || email==="" || username==="" || password===""){
 throw new ApiError(400,"all fields are required");
@@ -24,7 +24,7 @@ throw new ApiError(400,"all fields are required");
 
      }
 
-const existeduser=user.findOne(
+const existeduser= await user.findOne(
     { 
         $or:[{username},{email}]
     }
@@ -32,7 +32,7 @@ const existeduser=user.findOne(
 if(existeduser) throw new ApiError(409,"already user exist");
 
 const avatarLocalPath=req.files?.avatar[0]?.path;
-const coverImageLocalPath=req.files?.coverimage[0]?.path;
+const coverImageLocalPath=req.files?.coverimage?.[0]?.path;
 
 if(!avatarLocalPath){
     throw new ApiError(400,"avatar file required");
@@ -40,12 +40,10 @@ if(!avatarLocalPath){
 }
 
 const avatar=await uploadCloudinary(avatarLocalPath)
-const coverimage=await uploadCloudinary(coverImageLocalPath)
 
-if(!avatarLocalPath){
-    throw new ApiError(400,"avatar file required");
-    
-}
+const coverimage=coverImageLocalPath?await uploadCloudinary(coverImageLocalPath):null
+
+
 
  const userinfo = await user.create({
     fullname,
@@ -61,7 +59,7 @@ const createdUser=await user.findById(userinfo._id).select(
 )
 
 
-if(createdUser){
+if(!createdUser){
     throw new ApiError(500,"something went wrong while regestering a user");
     
 }
