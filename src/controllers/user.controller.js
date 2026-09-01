@@ -69,4 +69,66 @@ return res.status(201).json(
 )
 
 })
-export default registerUser;
+
+const generateAcessAndRefreshTokens=async(userid)=>{
+try {
+    const tokenUser=await user.findById(userid)
+    const acessToken=tokenUser.generateAccessToken()
+    const refreshToken=tokenUser.generatRefreshToken()
+
+    tokenUser.refreshToken=refreshToken
+    await tokenUser.save({validateBeforeSave: false})
+    return {acessToken,refreshToken}
+} catch (error) {
+    throw new ApiError(500,"something went wrong while generating refresh and acess token")
+}
+}
+const LoginUser=asynchandler(async(req,res)=>{
+//req body
+//username or email
+//find the user
+//password check
+//access and refresh tokken
+//send cookie
+const{email,password,username}=req.body
+
+if(!username || !email){
+    throw new ApiError(400,"username or email is required")
+}
+
+const foundUser=await user.findOne({
+    $or:[{email},{username}]
+})
+
+if(!foundUser){
+    throw new ApiError(404,"user does not exist")
+}
+
+const isPasswordValid=await foundUser.isPasswordCorrect(password)
+
+if(!isPasswordValid){
+    throw new ApiError(401,"password is not valid")
+}
+const{refreshToken,acessToken}=await generateAcessAndRefreshTokens(foundUser._id)
+
+const isloggedin=await user.findById(foundUser._id).select("-password -refreshToken")
+
+const options={
+    httpOnly:true,
+    secure:true
+}
+res
+.status(200)
+.cookie("acessToken",acessToken,options)
+.cookie("refreshToken",refreshToken,options)
+.json(
+    new ApiResponse(
+        200,
+        {
+            foundUser:isloggedin,acessToken,refreshToken
+        },
+        "user logged in sucessfully"
+    ))
+
+}) 
+export {registerUser,LoginUser}
