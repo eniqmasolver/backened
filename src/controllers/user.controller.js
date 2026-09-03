@@ -131,4 +131,31 @@ res
     ))
 
 }) 
-export {registerUser,LoginUser}
+
+
+const logout=asynchandler(async(req,res)=>{
+
+    await user.findByIdAndUpdate(
+        req.User._id,
+        {
+            $set:{
+                refreshToken:undefined
+            }
+        },
+            {
+                new:true
+            }
+        
+    )
+    
+const options={
+    httpOnly:true,
+    secure:true
+}
+res
+.status(201)
+.clearcookie("acessToken",options)
+.clearcookie("refreshToken",options)
+.json(new ApiResponse(200,{},"logout succesfully"))
+})
+export {registerUser,LoginUser,logout} 
