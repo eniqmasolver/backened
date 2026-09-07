@@ -92,7 +92,7 @@ const LoginUser=asynchandler(async(req,res)=>{
 //send cookie
 const{email,password,username}=req.body
 
-if(!username || !email){
+if(!(username || email)){
     throw new ApiError(400,"username or email is required")
 }
 
@@ -125,7 +125,7 @@ res
     new ApiResponse(
         200,
         {
-            foundUser:isloggedin,acessToken,refreshToken
+             isloggedin,acessToken,refreshToken
         },
         "user logged in sucessfully"
     ))
@@ -138,8 +138,8 @@ const logout=asynchandler(async(req,res)=>{
     await user.findByIdAndUpdate(
         req.User._id,
         {
-            $set:{
-                refreshToken:undefined
+            $unset:{
+                refreshToken:true
             }
         },
             {
@@ -154,8 +154,8 @@ const options={
 }
 res
 .status(201)
-.clearcookie("acessToken",options)
-.clearcookie("refreshToken",options)
+.clearCookie("acessToken",options)
+.clearCookie("refreshToken",options)
 .json(new ApiResponse(200,{},"logout succesfully"))
 })
 export {registerUser,LoginUser,logout} 
