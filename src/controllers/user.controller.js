@@ -3,7 +3,7 @@ import ApiError from "../utils/apierror.js";
 import { user } from "../models/user.models.js";
 import uploadCloudinary from "../utils/clodinary.js";
 import ApiResponse from "../utils/apiresponse.js";
-
+import jwt from "jsonwebtoken"
 const registerUser=asynchandler(async (req,res)=>{
     //get user details from frontened
     //validation - not empty
@@ -158,4 +158,40 @@ res
 .clearCookie("refreshToken",options)
 .json(new ApiResponse(200,{},"logout succesfully"))
 })
-export {registerUser,LoginUser,logout} 
+
+
+
+const AcessRefreshToken=asynchandler(async(req,res)=>{
+
+  const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+  if(!incommingRefreshToken){
+    throw new ApiError(401,"unauthorized request")
+
+  }
+  const decodedToken=jwt.verify(incommingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
+  
+  const User=await user.findById(decodedToken?._id)
+  if(!user){
+    throw new ApiError(401,"invalid refresh token")
+  }
+
+  if(incommingRefreshToken!==user.refreshToken){
+    throw new ApiError(401,"refresh token is epired and used")
+
+  }
+ const {acessToken,newrefreshToken}=await generateAcessAndRefreshTokens(User._id)
+ const options={
+    http:true,
+    secure:true
+ }
+ res.status(200)
+ .cookie("acessToken",acessToken,options)
+ .cookie("refreshToken",newrefreshToken,options)
+ .json(
+   new ApiResponse(
+    200,{acessToken,newrefreshToken},"acess token refreshed succesfully"
+   ) 
+ )
+})
+export {registerUser,LoginUser,logout,AcessRefreshToken} 
