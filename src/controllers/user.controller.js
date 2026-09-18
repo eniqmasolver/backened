@@ -1,6 +1,6 @@
 import asynchandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/apierror.js";
-import { user } from "../models/user.models.js";
+import { user, user } from "../models/user.models.js";
 import uploadCloudinary from "../utils/clodinary.js";
 import ApiResponse from "../utils/apiresponse.js";
 import jwt from "jsonwebtoken"
@@ -194,4 +194,98 @@ const AcessRefreshToken=asynchandler(async(req,res)=>{
    ) 
  )
 })
-export {registerUser,LoginUser,logout,AcessRefreshToken} 
+
+
+
+
+const ChangeCurrentPassword=asynchandler(async(req,res)=>{
+    const {oldPassword,newPassword}=req.body
+
+    const User=await user.findById(req.User?._id)
+   const isPasswordCorrect=await User.isPasswordCorrect(oldPassword)
+
+    
+    if(!User){
+        throw new ApiError(400,"Invalid old Password")
+    }
+    User.password=newPassword
+   await User.save({validateBeforeSave:false})
+
+   return res.status(200)
+   .json(
+    new ApiResponse(
+        200,{},"succesfully pasword is changed"
+    )
+   )
+
+})
+
+
+
+
+
+const getcurrentuser=asynchandler(async(req,res)=>{
+    return res.status(200)
+    .json(
+        new ApiResponse(200,req.User,"current user fetched sucessfully")
+    )
+})
+
+
+
+
+
+const updateinfo=asynchandler(async(req,res)=>{
+    const {fullname,email}=req.body
+    if(!fullname || !email){
+        throw new ApiError(400,"all field are required")
+
+    }
+    const User=await user.findByIdAndUpdate(
+        req.User,
+        {
+            $set:{
+                fullname,
+                email:email
+            }
+        },{
+            new:true
+        }
+    ).select("-password")
+
+return res.status(200)
+.json(
+    new ApiResponse(200,{fullname,email},"account details updated succesfully"
+))
+
+
+})
+
+
+const UpdateUseravatar=asynchandler(async(req,res)=>{
+    const avatarLocalPath=req.file?.path
+    if(!avatarLocalPath){
+        throw new ApiError(400,"avatar file is missing")
+    }
+    const AvatarUpload= await uploadCloudinary(avatarLocalPath)
+    if(!AvatarUpload.url){
+        throw new ApiError(400,"error while uploading")
+    }
+const User =await user.findByIdAndUpdate(
+    req.User?._id,
+    {
+        $set:{
+            avatar:avatar.url
+        }
+    },
+    {
+        new:true
+    }
+).select("-password")
+ return res.status(200)
+ .json(new ApiResponse(
+    200,{user},"avatar image uploaded succesfully"
+ ))   
+})
+
+export {registerUser,LoginUser,logout,AcessRefreshToken,ChangeCurrentPassword,getcurrentuser,UpdateUseravatar}
