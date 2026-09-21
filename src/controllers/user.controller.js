@@ -293,11 +293,11 @@ const User =await user.findByIdAndUpdate(
 
 
 const getUserChannelProfile=asynchandler(async(req,res)=>{
-    const{username}=req.pharms
+    const{username}=req.params
     if(!username){
         throw new ApiError(400,"username not found")
     }
-    const channel=user.aggregate([
+    const channel=await user.aggregate([
         {
             $match:{
                 username:username.toLowerCase()
