@@ -202,10 +202,13 @@ const ChangeCurrentPassword=asynchandler(async(req,res)=>{
     const {oldPassword,newPassword}=req.body
 
     const User=await user.findById(req.User?._id)
+    if(!user){
+        throw new ApiError(400,"user not found")
+    }
    const isPasswordCorrect=await User.isPasswordCorrect(oldPassword)
 
     
-    if(!User){
+    if(!isPasswordCorrect){
         throw new ApiError(400,"Invalid old Password")
     }
     User.password=newPassword
@@ -286,6 +289,78 @@ const User =await user.findByIdAndUpdate(
  .json(new ApiResponse(
     200,{user},"avatar image uploaded succesfully"
  ))   
+})
+
+
+const getUserChannelProfile=asynchandler(async(req,res)=>{
+    const{username}=req.pharms
+    if(!username){
+        throw new ApiError(400,"username not found")
+    }
+    const channel=user.aggregate([
+        {
+            $match:{
+                username:username.toLowerCase()
+            }
+        },
+        {
+            $lookup:{
+                from:"Subscription",
+                localField:"_id",
+                foreignField:"channel",
+                as:"subscribers"
+            }
+        },
+        {
+            $lookup:{
+                from:"Subscription",
+                localField:"_id",
+                foreignField:"subscriber",
+                as:"subscribedTo"
+            }
+        },
+        {
+            $addFields:{
+                subscriberCount:{
+                    $size:"$subscribers"
+                },
+               subscribedToCount: {
+                    $size:"$subscribedTo"
+                },
+                isSubscribedTo:{
+                    $cond:{
+                        if:{$in: [req.user?._id,"$subscribers.subsciber"]},
+                        then:true,
+                        else:false
+                    }
+                }
+        }
+        },
+        {
+            $project:{
+                fullname:1,
+                username:1,
+                avatar:1,
+                coverimage:1,
+                 subscriberCount:1,
+                  subscribedToCount:1,
+                  isSubscribedTo:1,
+                  email:1
+
+
+
+            }
+
+        }
+    ])
+    if(!channel?.length){
+        throw new ApiError(404,"channel does not exist")
+    }
+    return res.status(200)
+    .json(new ApiResponse(
+        200,channel[0],"user channel fetched succesfully"
+    ))
+
 })
 
 export {registerUser,LoginUser,logout,AcessRefreshToken,ChangeCurrentPassword,getcurrentuser,UpdateUseravatar}
